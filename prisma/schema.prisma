@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 1. USERS (The Account & Library)
+// -----------------------------------------------------------------------------
+model User {
+  id          String  @id @default(uuid())
+  email       String  @unique
+  passwordHash String
+  displayName String
+  avatarUrl   String?
+  role        Role    @default(USER)
+
+  // Email verification
+  isEmailVerified     Boolean   @default(false)
+  emailVerifyToken    String?
+  // Password reset
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+
+  // Relations
+  recognitions  Recognition[]
+  favorites     FavoriteReciter[]
+  refreshTokens RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// -----------------------------------------------------------------------------
+// 2. REFRESH TOKENS (Auth Session Management)
+// -----------------------------------------------------------------------------
+model RefreshToken {
+  id        String   @id @default(uuid())
+
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  revokedAt DateTime? // null = still valid
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// -----------------------------------------------------------------------------
+// 3. RECITERS (The "Mojawid" & Discovery)
+// -----------------------------------------------------------------------------
+model Reciter {
+  id          String  @id @default(uuid())
+  name        String  // Not unique — different generations can share names
+  slug        String  @unique
+  biography   String? @db.Text
+  imageUrl    String?
+  nationality String?
+
+  // External links
+  spotifyUrl  String?
+  youtubeUrl  String?
+
+  // Cached counter for trending/top charts — must be incremented manually on each Recognition
+  totalDiscoveries Int @default(0)
+
+  // Relations
+  recognitions Recognition[]
+  favoritedBy  FavoriteReciter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([totalDiscoveries]) // for trending queries
+  @@map("reciters")
+}
+
+// -----------------------------------------------------------------------------
+// 4. SURAHS (Quran Chapter Reference)
+// -----------------------------------------------------------------------------
+model Surah {
+  id          Int    @id // 1–114, the official Quran number
+  arabicName  String // e.g., "الفاتحة"
+  englishName String // e.g., "Al-Fatihah"
+  ayahCount   Int    // total verses in this surah
+
+  recognitions Recognition[]
+
+  @@map("surahs")
+}
+
+// -----------------------------------------------------------------------------
+// 5. RECOGNITIONS (The "Discoveries" / History)
+// -----------------------------------------------------------------------------
+model Recognition {
+  id String @id @default(uuid())
+
+  // Who searched? (null = anonymous guest)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Who was found?
+  reciterId String
+  reciter   Reciter @relation(fields: [reciterId], references: [id], onDelete: Cascade)
+
+  // AI result
+  confidenceScore Float  // 0.0 – 1.0 (e.g., 0.97 = 97%)
+  audioDuration   Float? // snippet length in seconds
+  audioFileKey    String? // storage key for the uploaded snippet (e.g., S3 key)
+
+  // Surah/Ayah detected (optional — populated when AI can identify it)
+  surahId    Int?
+  surah      Surah? @relation(fields: [surahId], references: [id], onDelete: SetNull)
+  ayahNumber Int?
+
+  // Client metadata
+  deviceOs String? // "iOS" | "Android" | "Web"
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([reciterId])
+  @@index([createdAt])
+  @@map("recognitions")
+}
+
+// -----------------------------------------------------------------------------
+// 6. FAVORITES (The "Saved Artists")
+// -----------------------------------------------------------------------------
+model FavoriteReciter {
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reciterId String
+  reciter   Reciter @relation(fields: [reciterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, reciterId]) // composite PK — no redundant UUID needed
+  @@index([userId])
+  @@map("favorite_reciters")
+}
