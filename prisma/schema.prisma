@@ -11,12 +11,12 @@ datasource db {
 // 1. USERS (The Account & Library)
 // -----------------------------------------------------------------------------
 model User {
-  id          String  @id @default(uuid())
-  email       String  @unique
+  id           String  @id @default(uuid())
+  email        String  @unique
   passwordHash String
-  displayName String
-  avatarUrl   String?
-  role        Role    @default(USER)
+  displayName  String
+  avatarUrl    String?
+  role         Role    @default(USER)
 
   // Email verification
   isEmailVerified     Boolean   @default(false)
@@ -45,11 +45,11 @@ enum Role {
 // 2. REFRESH TOKENS (Auth Session Management)
 // -----------------------------------------------------------------------------
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token  String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
   revokedAt DateTime? // null = still valid
@@ -65,15 +65,15 @@ model RefreshToken {
 // -----------------------------------------------------------------------------
 model Reciter {
   id          String  @id @default(uuid())
-  name        String  // Not unique — different generations can share names
+  name        String // Not unique — different generations can share names
   slug        String  @unique
   biography   String? @db.Text
   imageUrl    String?
   nationality String?
 
   // External links
-  spotifyUrl  String?
-  youtubeUrl  String?
+  spotifyUrl String?
+  youtubeUrl String?
 
   // Cached counter for trending/top charts — must be incremented manually on each Recognition
   totalDiscoveries Int @default(0)
@@ -96,7 +96,7 @@ model Surah {
   id          Int    @id // 1–114, the official Quran number
   arabicName  String // e.g., "الفاتحة"
   englishName String // e.g., "Al-Fatihah"
-  ayahCount   Int    // total verses in this surah
+  ayahCount   Int // total verses in this surah
 
   recognitions Recognition[]
 
@@ -118,7 +118,7 @@ model Recognition {
   reciter   Reciter @relation(fields: [reciterId], references: [id], onDelete: Cascade)
 
   // AI result
-  confidenceScore Float  // 0.0 – 1.0 (e.g., 0.97 = 97%)
+  confidenceScore Float // 0.0 – 1.0 (e.g., 0.97 = 97%)
   audioDuration   Float? // snippet length in seconds
   audioFileKey    String? // storage key for the uploaded snippet (e.g., S3 key)
 
@@ -142,8 +142,8 @@ model Recognition {
 // 6. FAVORITES (The "Saved Artists")
 // -----------------------------------------------------------------------------
 model FavoriteReciter {
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   reciterId String
   reciter   Reciter @relation(fields: [reciterId], references: [id], onDelete: Cascade)
