@@ -98,13 +98,13 @@ app.use(
 // ==========================================
 // API ROUTES
 // ==========================================
-// import authRoutes from "./modules/auth/auth.routes";
-// import userRoutes from "./modules/users/users.routes";
+import authRoutes from "./modules/auth/auth.routes";
+import userRoutes from "./modules/users/users.routes";
 // import reciterRoutes from "./modules/reciters/reciters.routes";
 // import recognitionRoutes from "./modules/recognitions/recognitions.routes";
 
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 // app.use("/api/v1/reciters", reciterRoutes);
 // app.use("/api/v1/recognitions", recognitionRoutes);
 
