@@ -29,7 +29,9 @@ class EmailService {
   private async initialize() {
     try {
       if (!this.config.auth.user || !this.config.auth.pass) {
-        console.warn("[EmailService] SMTP credentials not set — email disabled.");
+        console.warn(
+          "[EmailService] SMTP credentials not set — email disabled.",
+        );
         return;
       }
 
@@ -125,7 +127,10 @@ class EmailService {
   }
 
   // --- 3. Password Reset ---
-  async sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+  ): Promise<boolean> {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     return this.send({

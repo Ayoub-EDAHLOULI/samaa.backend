@@ -36,7 +36,11 @@ export const authController = {
   async register(req: Request, res: Response) {
     try {
       const result = await authService.register(req.body);
-      res.cookie("refreshToken", result.tokens.refreshToken, getCookieOptions(req));
+      res.cookie(
+        "refreshToken",
+        result.tokens.refreshToken,
+        getCookieOptions(req),
+      );
 
       return ApiResponse.success(
         res,
@@ -48,7 +52,11 @@ export const authController = {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -56,7 +64,11 @@ export const authController = {
   async login(req: Request, res: Response) {
     try {
       const result = await authService.login(req.body);
-      res.cookie("refreshToken", result.tokens.refreshToken, getCookieOptions(req));
+      res.cookie(
+        "refreshToken",
+        result.tokens.refreshToken,
+        getCookieOptions(req),
+      );
 
       return ApiResponse.success(
         res,
@@ -67,7 +79,11 @@ export const authController = {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -79,7 +95,10 @@ export const authController = {
       const rawToken = req.cookies.refreshToken as string | undefined;
 
       if (!rawToken) {
-        throw new AppError("No refresh token provided", StatusCodes.UNAUTHORIZED);
+        throw new AppError(
+          "No refresh token provided",
+          StatusCodes.UNAUTHORIZED,
+        );
       }
 
       const tokens = await authService.refreshToken(rawToken);
@@ -96,7 +115,11 @@ export const authController = {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -115,7 +138,11 @@ export const authController = {
 
       return ApiResponse.success(res, null, "Logout successful");
     } catch {
-      return ApiResponse.error(res, "Logout failed", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Logout failed",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -123,17 +150,29 @@ export const authController = {
   async getProfile(req: Request, res: Response) {
     try {
       if (!req.user) {
-        return ApiResponse.error(res, "Authentication required", StatusCodes.UNAUTHORIZED);
+        return ApiResponse.error(
+          res,
+          "Authentication required",
+          StatusCodes.UNAUTHORIZED,
+        );
       }
 
       const profile = await authService.getProfile(req.user.userId);
 
-      return ApiResponse.success(res, profile, "Profile retrieved successfully");
+      return ApiResponse.success(
+        res,
+        profile,
+        "Profile retrieved successfully",
+      );
     } catch (error) {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -141,7 +180,11 @@ export const authController = {
   async changePassword(req: Request, res: Response) {
     try {
       if (!req.user) {
-        return ApiResponse.error(res, "Authentication required", StatusCodes.UNAUTHORIZED);
+        return ApiResponse.error(
+          res,
+          "Authentication required",
+          StatusCodes.UNAUTHORIZED,
+        );
       }
 
       const { currentPassword, newPassword } = req.body as {
@@ -149,14 +192,22 @@ export const authController = {
         newPassword: string;
       };
 
-      await authService.changePassword(req.user.userId, currentPassword, newPassword);
+      await authService.changePassword(
+        req.user.userId,
+        currentPassword,
+        newPassword,
+      );
 
       return ApiResponse.success(res, null, "Password changed successfully");
     } catch (error) {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -164,17 +215,28 @@ export const authController = {
   async updateProfile(req: Request, res: Response) {
     try {
       if (!req.user) {
-        return ApiResponse.error(res, "Authentication required", StatusCodes.UNAUTHORIZED);
+        return ApiResponse.error(
+          res,
+          "Authentication required",
+          StatusCodes.UNAUTHORIZED,
+        );
       }
 
-      const updated = await authService.updateProfile(req.user.userId, req.body);
+      const updated = await authService.updateProfile(
+        req.user.userId,
+        req.body,
+      );
 
       return ApiResponse.success(res, updated, "Profile updated successfully");
     } catch (error) {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -192,7 +254,11 @@ export const authController = {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -201,12 +267,20 @@ export const authController = {
     try {
       await authService.resetPassword(req.body);
 
-      return ApiResponse.success(res, null, "Password reset successfully. Please log in.");
+      return ApiResponse.success(
+        res,
+        null,
+        "Password reset successfully. Please log in.",
+      );
     } catch (error) {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -215,12 +289,20 @@ export const authController = {
     try {
       await authService.verifyEmail({ token: req.query.token as string });
 
-      return ApiResponse.success(res, null, "Email verified successfully. You can now log in.");
+      return ApiResponse.success(
+        res,
+        null,
+        "Email verified successfully. You can now log in.",
+      );
     } catch (error) {
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
-      return ApiResponse.error(res, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 };
