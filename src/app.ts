@@ -101,13 +101,13 @@ app.use(
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/users/users.routes";
 import reciterRoutes from "./modules/reciters/reciters.routes";
-// import recognitionRoutes from "./modules/recognitions/recognitions.routes";
+import recognitionRoutes from "./modules/recognitions/recognitions.routes";
 import surahRoutes from "./modules/surahs/surahs.routes";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/reciters", reciterRoutes);
-// app.use("/api/v1/recognitions", recognitionRoutes);
+app.use("/api/v1/recognitions", recognitionRoutes);
 app.use("/api/v1/surahs", surahRoutes);
 
 // 404 handler
