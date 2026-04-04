@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bienvenue dans la newsletter Atlantic Energy</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background: linear-gradient(135deg, #0A2240 0%, #1B3A6B 100%);
+        color: #fff;
+        padding: 44px 20px;
+        text-align: center;
+      }
+      .header .brand {
+        font-size: 12px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        opacity: 0.65;
+        margin-bottom: 12px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .header p {
+        margin-top: 10px;
+        font-size: 15px;
+        font-weight: 300;
+        opacity: 0.85;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .welcome-text {
+        font-size: 16px;
+        text-align: center;
+        margin-bottom: 28px;
+        color: #444;
+        line-height: 1.7;
+      }
+      .coupon-container {
+        border: 2px dashed #E87722;
+        background-color: #fffaf6;
+        padding: 30px;
+        text-align: center;
+        margin: 28px 0;
+        border-radius: 8px;
+      }
+      .coupon-title {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #888;
+        margin-bottom: 10px;
+      }
+      .coupon-code {
+        font-size: 32px;
+        font-weight: 800;
+        color: #0A2240;
+        margin: 10px 0;
+        letter-spacing: 3px;
+        font-family: "Courier New", monospace;
+      }
+      .coupon-desc {
+        font-size: 14px;
+        color: #888;
+        margin-top: 6px;
+      }
+      .cta-button {
+        display: block;
+        width: fit-content;
+        margin: 36px auto 10px;
+        padding: 16px 44px;
+        background-color: #E87722;
+        color: #fff !important;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 15px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(232, 119, 34, 0.3);
+      }
+      .features {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 36px;
+        border-top: 1px solid #eee;
+        padding-top: 28px;
+        text-align: center;
+        gap: 10px;
+      }
+      .feature-item {
+        font-size: 12px;
+        color: #555;
+        flex: 1;
+        line-height: 1.5;
+      }
+      .footer {
+        background-color: #0A2240;
+        padding: 28px 20px;
+        text-align: center;
+        font-size: 12px;
+        color: rgba(255,255,255,0.5);
+      }
+      .footer a {
+        color: rgba(255,255,255,0.75);
+        text-decoration: none;
+        margin: 0 5px;
+      }
+      .footer .footer-brand {
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="brand">Atlantic Energy</div>
+        <h1>Bienvenue !</h1>
+        <p>Merci de rejoindre notre newsletter</p>
+      </div>
+
+      <div class="content">
+        <p class="welcome-text">
+          Vous êtes désormais inscrit aux actualités d'<strong>Atlantic Energy</strong>.
+          Recevez en avant-première nos nouveaux produits, promotions exclusives
+          et conseils techniques.
+        </p>
+
+        <div class="coupon-container">
+          <div class="coupon-title">Votre code promo de bienvenue</div>
+          <div class="coupon-code"><%= COUPON_CODE %></div>
+          <div class="coupon-desc">
+            Profitez de votre réduction sur votre prochaine commande
+          </div>
+        </div>
+
+        <p style="text-align: center; font-size: 14px; color: #666; line-height: 1.6">
+          Utilisez ce code lors du passage de votre commande.<br />
+          Valable sur tout notre catalogue de produits.
+        </p>
+
+        <a href="<%= SHOP_URL %>/catalogue" class="cta-button">
+          Découvrir le catalogue
+        </a>
+
+        <div class="features">
+          <div class="feature-item">
+            <strong>⚡ Distributeur Officiel</strong><br />EATON & SUNLIGHT
+          </div>
+          <div class="feature-item">
+            <strong>🛠️ Support Technique</strong><br />Équipe d'experts
+          </div>
+          <div class="feature-item">
+            <strong>🚚 Livraison Rapide</strong><br />Partout au Maroc
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-brand">ATLANTIC ENERGY</div>
+        <p>© <%= YEAR %> Atlantic Energy. Tous droits réservés.</p>
+        <p>
+          <a href="<%= SHOP_URL %>">Site</a> |
+          <a href="<%= SHOP_URL %>/catalogue">Catalogue</a> |
+          <a href="<%= SHOP_URL %>/contact">Contact</a>
+        </p>
+        <p style="margin-top: 16px; font-size: 11px; opacity: 0.7">
+          Vous recevez cet email car vous vous êtes inscrit à la newsletter Atlantic Energy.<br />
+          Pour vous désabonner, contactez-nous.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

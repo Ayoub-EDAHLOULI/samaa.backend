@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Samaa</title>
+    <style>
+      body { margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; }
+      .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+      .header { background: linear-gradient(135deg, #0D3B2E 0%, #1A5C47 100%); color: #ffffff; padding: 48px 30px; text-align: center; }
+      .header .brand { font-size: 13px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.65; margin-bottom: 14px; }
+      .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+      .header p { margin-top: 10px; font-size: 15px; opacity: 0.85; font-weight: 300; }
+      .content { padding: 40px 30px; }
+      .welcome-text { font-size: 16px; color: #444; line-height: 1.7; margin-bottom: 30px; }
+      .highlights { margin: 28px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 24px 0; }
+      .highlight-row { display: flex; align-items: flex-start; margin-bottom: 18px; gap: 14px; }
+      .highlight-row:last-child { margin-bottom: 0; }
+      .highlight-icon { font-size: 22px; flex-shrink: 0; width: 30px; text-align: center; }
+      .highlight-text strong { display: block; font-size: 14px; color: #0D3B2E; margin-bottom: 3px; }
+      .highlight-text span { font-size: 13px; color: #666; line-height: 1.5; }
+      .cta-button { display: block; width: fit-content; margin: 32px auto 10px; padding: 16px 44px; background-color: #C8960C; color: #fff !important; text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 6px; letter-spacing: 0.5px; }
+      .footer { background-color: #0D3B2E; padding: 28px 20px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.5); }
+      .footer a { color: rgba(255,255,255,0.75); text-decoration: none; margin: 0 6px; }
+      .footer .footer-brand { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 3px; margin-bottom: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="brand">Samaa · سماع</div>
+        <h1>Welcome, <%= displayName %>!</h1>
+        <p>Your account has been created successfully</p>
+      </div>
+
+      <div class="content">
+        <p class="welcome-text">
+          We're glad to have you on <strong>Samaa</strong> — the app that helps you
+          discover and identify Quranic reciters, just like Shazam does for music.
+          Record a snippet of any recitation and let our AI find the Mojawid for you.
+        </p>
+
+        <div class="highlights">
+          <div class="highlight-row">
+            <div class="highlight-icon">🎙️</div>
+            <div class="highlight-text">
+              <strong>Instant Reciter Recognition</strong>
+              <span>Record or upload any Quranic recitation and identify the Mojawid in seconds.</span>
+            </div>
+          </div>
+          <div class="highlight-row">
+            <div class="highlight-icon">📚</div>
+            <div class="highlight-text">
+              <strong>Your Discovery History</strong>
+              <span>Every reciter you discover is saved to your personal library.</span>
+            </div>
+          </div>
+          <div class="highlight-row">
+            <div class="highlight-icon">⭐</div>
+            <div class="highlight-text">
+              <strong>Favorite Reciters</strong>
+              <span>Follow your favorite Mujawwideen and find links to listen on Spotify or YouTube.</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="<%= APP_URL %>" class="cta-button">Open Samaa</a>
+
+        <p style="margin-top: 30px; font-size: 15px">
+          Jazakum Allahu Khayran,<br />
+          <strong>The Samaa Team</strong>
+        </p>
+      </div>
+
+      <div class="footer">
+        <div class="footer-brand">SAMAA</div>
+        <p>© <%= YEAR %> Samaa. All rights reserved.</p>
+        <p>
+          <a href="<%= APP_URL %>">App</a> |
+          <a href="<%= APP_URL %>/privacy">Privacy</a> |
+          <a href="<%= APP_URL %>/contact">Contact</a>
+        </p>
+        <p style="margin-top: 12px; font-size: 11px">This email was sent automatically, please do not reply.</p>
+      </div>
+    </div>
+  </body>
+</html>
