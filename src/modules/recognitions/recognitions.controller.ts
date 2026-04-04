@@ -11,7 +11,6 @@ export const recognitionsController = {
         throw new AppError("No audio file provided", StatusCodes.BAD_REQUEST);
       }
 
-      // req.user might be undefined if it's a guest request
       const userId = req.user?.userId;
 
       const result = await recognitionsService.processAudio(req.file, userId);
@@ -34,7 +33,6 @@ export const recognitionsController = {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 20;
 
-      // We know req.user exists because of the authenticate middleware
       const result = await recognitionsService.getUserHistory(
         req.user!.userId,
         page,
