@@ -80,10 +80,42 @@ export const reciterController = {
     }
   },
 
+  // GET /reciters/id/:id  (Admin)
+  async getReciterById(req: Request, res: Response) {
+    try {
+      const reciter = await reciterService.getReciterById(
+        req.params.id as string,
+      );
+
+      return ApiResponse.success(
+        res,
+        reciter,
+        "Reciter retrieved successfully",
+      );
+    } catch (error) {
+      if (error instanceof AppError) {
+        return ApiResponse.error(res, error.message, error.statusCode);
+      }
+      return ApiResponse.error(
+        res,
+        "Internal Server Error",
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+
   // POST /reciters  (Admin)
   async createReciter(req: Request, res: Response) {
     try {
-      const reciter = await reciterService.createReciter(req.body);
+      let imageUrl: string | undefined;
+      if (req.file) {
+        imageUrl = await reciterService.saveImageFile(req.file);
+      }
+
+      const reciter = await reciterService.createReciter({
+        ...req.body,
+        imageUrl,
+      });
 
       return ApiResponse.success(
         res,
@@ -106,9 +138,21 @@ export const reciterController = {
   // PUT /reciters/:id  (Admin)
   async updateReciter(req: Request, res: Response) {
     try {
+      let imageUrl: string | undefined;
+      if (req.file) {
+        // Fetch current imageUrl so saveImageFile can delete the old file
+        const current = await reciterService.getReciterById(
+          req.params.id as string,
+        );
+        imageUrl = await reciterService.saveImageFile(
+          req.file,
+          current.imageUrl,
+        );
+      }
+
       const updated = await reciterService.updateReciter(
         req.params.id as string,
-        req.body,
+        { ...req.body, ...(imageUrl && { imageUrl }) },
       );
 
       return ApiResponse.success(res, updated, "Reciter updated successfully");

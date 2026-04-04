@@ -1,3 +1,6 @@
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/utils/errors";
 import { StatusCodes } from "../../shared/constants/status-codes";
@@ -120,6 +123,22 @@ export const reciterService = {
     }
 
     return { ...formatReciter(reciter), isFavorited };
+  },
+
+  // ---------------------------------------------------------------------------
+  // Get reciter by ID (Admin — used internally and for edit forms)
+  // ---------------------------------------------------------------------------
+  async getReciterById(id: string): Promise<ReciterResponse> {
+    const reciter = await prisma.reciter.findUnique({
+      where: { id },
+      select: reciterSelect,
+    });
+
+    if (!reciter) {
+      throw new AppError("Reciter not found", StatusCodes.NOT_FOUND);
+    }
+
+    return formatReciter(reciter);
   },
 
   // ---------------------------------------------------------------------------
@@ -256,5 +275,45 @@ export const reciterService = {
 
     await prisma.favoriteReciter.create({ data: { userId, reciterId } });
     return { isFavorited: true };
+  },
+
+  // ---------------------------------------------------------------------------
+  // Save image file to disk (used by create & update)
+  // Returns the public URL path, e.g. /uploads/reciters/abc123.jpg
+  // If oldImageUrl is provided and points to local storage, the old file is deleted.
+  // ---------------------------------------------------------------------------
+  async saveImageFile(
+    file: Express.Multer.File,
+    oldImageUrl?: string | null,
+  ): Promise<string> {
+    const allowedExt = [".jpg", ".jpeg", ".png", ".webp"];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (!allowedExt.includes(ext)) {
+      throw new AppError(
+        `Unsupported image format "${ext}". Allowed: JPG, PNG, WEBP`,
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    const fileName = `${crypto.randomBytes(8).toString("hex")}${ext}`;
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "reciters");
+    const uploadPath = path.join(uploadDir, fileName);
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    fs.writeFileSync(uploadPath, file.buffer);
+
+    // Delete old local image if it was stored on this server
+    if (oldImageUrl && oldImageUrl.startsWith("/uploads/reciters/")) {
+      const oldPath = path.join(process.cwd(), "public", oldImageUrl);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    return `/uploads/reciters/${fileName}`;
   },
 };
