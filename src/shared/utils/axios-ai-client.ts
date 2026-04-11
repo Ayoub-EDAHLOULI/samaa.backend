@@ -21,7 +21,7 @@ export async function predictReciterFromAudio(
   try {
     // The URL of the Python microservice is configurable via environment variable for flexibility (e.g., different URLs for development vs production)
     const aiServiceUrl =
-      process.env.AI_MICROSERVICE_URL || "http://localhost:8000/predict";
+      process.env.AI_MICROSERVICE_URL || "http://127.0.0.1:8000/predict";
 
     // 1. Construct the multipart/form-data payload for Python
     const form = new FormData();

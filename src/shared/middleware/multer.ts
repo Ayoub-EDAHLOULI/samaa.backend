@@ -13,11 +13,13 @@ const uploadAudio = multer({
   },
   fileFilter(req, file, cb) {
     const allowedMimeTypes = [
-      "audio/mpeg", // .mp3
-      "audio/mp4", // .m4a
-      "audio/x-m4a", // Apple specific m4a
-      "audio/wav", // .wav
-      "audio/aac", // .aac
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/aac",
+      "audio/m4a", // Standard M4A
+      "audio/x-m4a", // Apple iOS specific M4A
+      "audio/mp4", // Android fallback
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
