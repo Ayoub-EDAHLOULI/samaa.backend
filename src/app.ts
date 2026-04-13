@@ -103,6 +103,9 @@ import userRoutes from "./modules/users/users.routes";
 import reciterRoutes from "./modules/reciters/reciters.routes";
 import recognitionRoutes from "./modules/recognitions/recognitions.routes";
 import surahRoutes from "./modules/surahs/surahs.routes";
+import languageRoutes from "./modules/languages/languages.routes";
+
+app.use("/api/v1/languages", languageRoutes);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
