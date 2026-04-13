@@ -19,7 +19,11 @@ const uploadAudio = multer({
       "audio/aac",
       "audio/m4a", // Standard M4A
       "audio/x-m4a", // Apple iOS specific M4A
-      "audio/mp4", // Android fallback
+      "audio/mp4", // Android / Chrome
+      "audio/ogg", // Firefox (ogg/opus)
+      "audio/ogg; codecs=opus",
+      "audio/webm", // Chrome fallback
+      "audio/webm; codecs=opus",
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {

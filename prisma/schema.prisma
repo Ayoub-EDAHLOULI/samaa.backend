@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+// -----------------------------------------------------------------------------
+// 0. LANGUAGE (For Future Localization Support)
+// -----------------------------------------------------------------------------
+model Language {
+  id                          Int                          @id @default(autoincrement())
+  code                        String                       @unique
+  name                        String
+  isDefault                   Boolean                      @default(false)
+  isActive                    Boolean                      @default(true)
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+}
+
 // -----------------------------------------------------------------------------
 // 1. USERS (The Account & Library)
 // -----------------------------------------------------------------------------
@@ -61,32 +75,55 @@ model RefreshToken {
 }
 
 // -----------------------------------------------------------------------------
-// 3. RECITERS (The "Mojawid" & Discovery)
+// 3. RECITERS (Main Table - Universal Data)
 // -----------------------------------------------------------------------------
 model Reciter {
-  id          String  @id @default(uuid())
-  name        String // Not unique — different generations can share names
-  slug        String  @unique
-  biography   String? @db.Text
-  imageUrl    String?
-  nationality String?
-
+  id               String  @id @default(uuid())
+  slug             String  @unique // Universal URL identifier (e.g., mishary-alafasy)
+  imageUrl         String?
+  countryCode      String? // 2-letter ISO code for flags (e.g., "KW", "EG")
+  style            String? // e.g., "Murattal", "Mujawwad"
+  
   // External links
-  spotifyUrl String?
-  youtubeUrl String?
+  spotifyUrl       String?
+  youtubeUrl       String?
 
-  // Cached counter for trending/top charts — must be incremented manually on each Recognition
+  // Cached counter for trending/top charts
   totalDiscoveries Int @default(0)
 
   // Relations
-  recognitions Recognition[]
-  favoritedBy  FavoriteReciter[]
+  translations     ReciterTranslation[]
+  recognitions     Recognition[]
+  favoritedBy      FavoriteReciter[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  @@index([totalDiscoveries]) // for trending queries
+  @@index([totalDiscoveries])
   @@map("reciters")
+}
+
+// -----------------------------------------------------------------------------
+// 3.1 RECITER TRANSLATIONS (Localized Data)
+// -----------------------------------------------------------------------------
+model ReciterTranslation {
+  id          String  @id @default(uuid())
+  
+  reciterId   String
+  reciter     Reciter @relation(fields: [reciterId], references: [id], onDelete: Cascade)
+  
+  language    String  // "en", "fr", "es", "ar"
+  
+  name        String  // e.g., "Mishary Alafasy" (en), "مشاري العفاسي" (ar)
+  nationality String? // e.g., "Kuwaiti" (en), "Koweïtien" (fr), "كويتي" (ar)
+  shortBio    String? @db.Text
+  biography   String? @db.Text
+  seoTitle    String?
+  tags        String? // Comma-separated localized search keywords
+
+  @@unique([reciterId, language]) // A reciter can only have ONE translation per language
+  @@index([language])
+  @@map("reciter_translations")
 }
 
 // -----------------------------------------------------------------------------
