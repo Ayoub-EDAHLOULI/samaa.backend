@@ -5,11 +5,12 @@ export const languageValidation = {
     body: z.object({
       code: z
         .string()
-        .length(2, "Language code must be exactly 2 characters (ISO 639-1)")
+        .min(2, "Language code must be at least 2 characters")
+        .max(3, "Language code must be at most 3 characters")
         .toLowerCase()
         .regex(
-          /^[a-z]{2}$/,
-          "Language code must contain only lowercase letters",
+          /^[a-z]{2,3}$/,
+          "Language code must contain only lowercase letters (e.g. en, fr, ary)",
         ),
       name: z
         .string()
@@ -34,7 +35,7 @@ export const languageValidation = {
 
   params: z.object({
     params: z.object({
-      code: z.string().length(2, "Invalid language code"),
+      code: z.string().min(2).max(3).regex(/^[a-z]{2,3}$/, "Invalid language code").toLowerCase(),
     }),
   }),
 };

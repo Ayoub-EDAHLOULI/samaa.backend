@@ -196,6 +196,28 @@ async function main() {
   });
 
   console.log(`✅ Admin user seeded: ${ADMIN_EMAIL}`);
+
+  // ---------------------------------------------------------------------------
+  // 3. Seed supported languages (matches frontend locales)
+  // ---------------------------------------------------------------------------
+  console.log("🌐 Seeding languages...");
+
+  const LANGUAGES = [
+    { code: "fr",  name: "Français",  isDefault: true,  isActive: true },
+    { code: "en",  name: "English",   isDefault: false, isActive: true },
+    { code: "es",  name: "Español",   isDefault: false, isActive: true },
+    { code: "ary", name: "العربية",   isDefault: false, isActive: true },
+  ];
+
+  for (const lang of LANGUAGES) {
+    await prisma.language.upsert({
+      where: { code: lang.code },
+      update: { name: lang.name, isActive: lang.isActive },
+      create: lang,
+    });
+  }
+
+  console.log(`✅ ${LANGUAGES.length} languages seeded.`);
   console.log("🏁 Seed complete.");
 }
 
