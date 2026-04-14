@@ -225,12 +225,20 @@ export const userService = {
       const topGroup = topGroups[0];
       const reciter = await prisma.reciter.findUnique({
         where: { id: topGroup.reciterId },
-        select: { id: true, name: true, slug: true, imageUrl: true },
+        select: {
+          id: true,
+          slug: true,
+          imageUrl: true,
+          translations: { where: { language: "en" }, take: 1, select: { name: true } },
+        },
       });
 
       if (reciter) {
         mostDiscoveredReciter = {
-          ...reciter,
+          id: reciter.id,
+          name: reciter.translations[0]?.name ?? reciter.slug,
+          slug: reciter.slug,
+          imageUrl: reciter.imageUrl,
           count: topGroup._count.reciterId,
         };
       }

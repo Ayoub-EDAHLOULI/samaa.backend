@@ -8,65 +8,127 @@ import {
   CreateReciterDto,
   UpdateReciterDto,
   ReciterResponse,
+  AdminReciterResponse,
   ReciterDetailResponse,
+  ReciterTranslationResponse,
   ToggleFavoriteResult,
 } from "./reciters.types";
 
-// Shared select — used in list queries
-const reciterSelect = {
-  id: true,
-  name: true,
-  slug: true,
-  biography: true,
-  imageUrl: true,
-  nationality: true,
-  spotifyUrl: true,
-  youtubeUrl: true,
-  totalDiscoveries: true,
-  createdAt: true,
-  updatedAt: true,
-  _count: { select: { favoritedBy: true } },
-} as const;
-
-function formatReciter(raw: {
+// ---------------------------------------------------------------------------
+// Internal helper — raw Prisma shape returned by buildSelect
+// ---------------------------------------------------------------------------
+interface RawReciter {
   id: string;
-  name: string;
   slug: string;
-  biography: string | null;
   imageUrl: string | null;
-  nationality: string | null;
+  countryCode: string | null;
+  style: string | null;
   spotifyUrl: string | null;
   youtubeUrl: string | null;
   totalDiscoveries: number;
   createdAt: Date;
   updatedAt: Date;
   _count: { favoritedBy: number };
-}): ReciterResponse {
-  const { _count, ...rest } = raw;
-  return { ...rest, favoritesCount: _count.favoritedBy };
+  translations: {
+    language: string;
+    name: string;
+    nationality: string | null;
+    shortBio: string | null;
+    biography: string | null;
+    seoTitle: string | null;
+    tags: string | null;
+  }[];
+}
+
+// Build the Prisma select that returns core fields + one language's translation
+function buildSelect(lang: string) {
+  return {
+    id: true,
+    slug: true,
+    imageUrl: true,
+    countryCode: true,
+    style: true,
+    spotifyUrl: true,
+    youtubeUrl: true,
+    totalDiscoveries: true,
+    createdAt: true,
+    updatedAt: true,
+    _count: { select: { favoritedBy: true } },
+    translations: {
+      where: { language: lang },
+      take: 1,
+      select: {
+        language: true,
+        name: true,
+        nationality: true,
+        shortBio: true,
+        biography: true,
+        seoTitle: true,
+        tags: true,
+      },
+    },
+  };
+}
+
+function formatTranslation(
+  t: RawReciter["translations"][0],
+): ReciterTranslationResponse {
+  return {
+    language: t.language,
+    name: t.name,
+    nationality: t.nationality,
+    shortBio: t.shortBio,
+    biography: t.biography,
+    seoTitle: t.seoTitle,
+    tags: t.tags,
+  };
+}
+
+function formatReciter(raw: RawReciter): ReciterResponse {
+  const { _count, translations, ...rest } = raw;
+  return {
+    ...rest,
+    favoritesCount: _count.favoritedBy,
+    translation: translations[0] ? formatTranslation(translations[0]) : null,
+  };
 }
 
 export const reciterService = {
   // ---------------------------------------------------------------------------
   // List all reciters — paginated + optional search (Public)
   // ---------------------------------------------------------------------------
-  async getAllReciters(page: number = 1, limit: number = 20, search?: string) {
+  async getAllReciters(
+    page: number = 1,
+    limit: number = 20,
+    search?: string,
+    lang: string = "en",
+  ) {
     const skip = (page - 1) * limit;
 
     const where = search
       ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { nationality: { contains: search, mode: "insensitive" as const } },
-          ],
+          translations: {
+            some: {
+              language: lang,
+              OR: [
+                { name: { contains: search, mode: "insensitive" as const } },
+                {
+                  nationality: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
+              ],
+            },
+          },
         }
       : {};
 
     const [reciters, total] = await Promise.all([
       prisma.reciter.findMany({
         where,
-        select: reciterSelect,
-        orderBy: { name: "asc" },
+        select: buildSelect(lang),
+        orderBy: { slug: "asc" },
         skip,
         take: limit,
       }),
@@ -74,7 +136,7 @@ export const reciterService = {
     ]);
 
     return {
-      data: reciters.map(formatReciter),
+      data: (reciters as unknown as RawReciter[]).map(formatReciter),
       pagination: {
         page,
         limit,
@@ -87,14 +149,17 @@ export const reciterService = {
   // ---------------------------------------------------------------------------
   // Trending reciters — ordered by totalDiscoveries (Public)
   // ---------------------------------------------------------------------------
-  async getTrendingReciters(limit: number = 10): Promise<ReciterResponse[]> {
+  async getTrendingReciters(
+    limit: number = 10,
+    lang: string = "en",
+  ): Promise<ReciterResponse[]> {
     const reciters = await prisma.reciter.findMany({
-      select: reciterSelect,
+      select: buildSelect(lang),
       orderBy: { totalDiscoveries: "desc" },
       take: limit,
     });
 
-    return reciters.map(formatReciter);
+    return (reciters as unknown as RawReciter[]).map(formatReciter);
   },
 
   // ---------------------------------------------------------------------------
@@ -103,10 +168,11 @@ export const reciterService = {
   async getReciterBySlug(
     slug: string,
     userId?: string,
+    lang: string = "en",
   ): Promise<ReciterDetailResponse> {
     const reciter = await prisma.reciter.findUnique({
       where: { slug },
-      select: reciterSelect,
+      select: buildSelect(lang),
     });
 
     if (!reciter) {
@@ -122,23 +188,54 @@ export const reciterService = {
       isFavorited = favorite !== null;
     }
 
-    return { ...formatReciter(reciter), isFavorited };
+    return {
+      ...formatReciter(reciter as unknown as RawReciter),
+      isFavorited,
+    };
   },
 
   // ---------------------------------------------------------------------------
-  // Get reciter by ID (Admin — used internally and for edit forms)
+  // Get reciter by ID — returns all translations (Admin edit forms)
   // ---------------------------------------------------------------------------
-  async getReciterById(id: string): Promise<ReciterResponse> {
+  async getReciterById(id: string): Promise<AdminReciterResponse> {
     const reciter = await prisma.reciter.findUnique({
       where: { id },
-      select: reciterSelect,
+      select: {
+        id: true,
+        slug: true,
+        imageUrl: true,
+        countryCode: true,
+        style: true,
+        spotifyUrl: true,
+        youtubeUrl: true,
+        totalDiscoveries: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { favoritedBy: true } },
+        translations: {
+          select: {
+            language: true,
+            name: true,
+            nationality: true,
+            shortBio: true,
+            biography: true,
+            seoTitle: true,
+            tags: true,
+          },
+        },
+      },
     });
 
     if (!reciter) {
       throw new AppError("Reciter not found", StatusCodes.NOT_FOUND);
     }
 
-    return formatReciter(reciter);
+    const { _count, translations, ...rest } = reciter;
+    return {
+      ...rest,
+      favoritesCount: _count.favoritedBy,
+      translations: translations.map(formatTranslation),
+    };
   },
 
   // ---------------------------------------------------------------------------
@@ -156,24 +253,37 @@ export const reciterService = {
       );
     }
 
+    const lang = data.language ?? "en";
+
     const reciter = await prisma.reciter.create({
       data: {
-        name: data.name,
         slug: data.slug,
-        biography: data.biography,
         imageUrl: data.imageUrl,
-        nationality: data.nationality,
+        countryCode: data.countryCode,
+        style: data.style,
         spotifyUrl: data.spotifyUrl,
         youtubeUrl: data.youtubeUrl,
+        translations: {
+          create: {
+            language: lang,
+            name: data.name,
+            nationality: data.nationality,
+            shortBio: data.shortBio,
+            biography: data.biography,
+            seoTitle: data.seoTitle,
+            tags: data.tags,
+          },
+        },
       },
-      select: reciterSelect,
+      select: buildSelect(lang),
     });
 
-    return formatReciter(reciter);
+    return formatReciter(reciter as unknown as RawReciter);
   },
 
   // ---------------------------------------------------------------------------
   // Update reciter (Admin)
+  // Core fields and the specified language's translation are upserted together.
   // ---------------------------------------------------------------------------
   async updateReciter(
     id: string,
@@ -185,12 +295,10 @@ export const reciterService = {
       throw new AppError("Reciter not found", StatusCodes.NOT_FOUND);
     }
 
-    // Check slug uniqueness only if slug is being changed
     if (data.slug && data.slug !== reciter.slug) {
       const slugTaken = await prisma.reciter.findUnique({
         where: { slug: data.slug },
       });
-
       if (slugTaken) {
         throw new AppError(
           `Slug "${data.slug}" is already in use`,
@@ -199,23 +307,63 @@ export const reciterService = {
       }
     }
 
+    const lang = data.language ?? "en";
+
+    const hasTranslationData = [
+      data.name,
+      data.nationality,
+      data.shortBio,
+      data.biography,
+      data.seoTitle,
+      data.tags,
+    ].some((v) => v !== undefined);
+
     const updated = await prisma.reciter.update({
       where: { id },
       data: {
-        ...(data.name !== undefined && { name: data.name }),
         ...(data.slug !== undefined && { slug: data.slug }),
-        ...(data.biography !== undefined && { biography: data.biography }),
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
-        ...(data.nationality !== undefined && {
-          nationality: data.nationality,
+        ...(data.countryCode !== undefined && {
+          countryCode: data.countryCode,
         }),
+        ...(data.style !== undefined && { style: data.style }),
         ...(data.spotifyUrl !== undefined && { spotifyUrl: data.spotifyUrl }),
         ...(data.youtubeUrl !== undefined && { youtubeUrl: data.youtubeUrl }),
+        ...(hasTranslationData && {
+          translations: {
+            upsert: {
+              where: {
+                reciterId_language: { reciterId: id, language: lang },
+              },
+              update: {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.nationality !== undefined && {
+                  nationality: data.nationality,
+                }),
+                ...(data.shortBio !== undefined && { shortBio: data.shortBio }),
+                ...(data.biography !== undefined && {
+                  biography: data.biography,
+                }),
+                ...(data.seoTitle !== undefined && { seoTitle: data.seoTitle }),
+                ...(data.tags !== undefined && { tags: data.tags }),
+              },
+              create: {
+                language: lang,
+                name: data.name ?? "",
+                nationality: data.nationality,
+                shortBio: data.shortBio,
+                biography: data.biography,
+                seoTitle: data.seoTitle,
+                tags: data.tags,
+              },
+            },
+          },
+        }),
       },
-      select: reciterSelect,
+      select: buildSelect(lang),
     });
 
-    return formatReciter(updated);
+    return formatReciter(updated as unknown as RawReciter);
   },
 
   // ---------------------------------------------------------------------------
@@ -227,7 +375,12 @@ export const reciterService = {
       where: { id },
       select: {
         id: true,
-        name: true,
+        slug: true,
+        translations: {
+          where: { language: "en" },
+          take: 1,
+          select: { name: true },
+        },
         _count: { select: { recognitions: true } },
       },
     });
@@ -236,9 +389,11 @@ export const reciterService = {
       throw new AppError("Reciter not found", StatusCodes.NOT_FOUND);
     }
 
+    const name = reciter.translations[0]?.name ?? reciter.slug;
+
     if (reciter._count.recognitions > 0) {
       throw new AppError(
-        `Cannot delete "${reciter.name}" — they have ${reciter._count.recognitions} recognition(s) in user history. Reassign or clear them first.`,
+        `Cannot delete "${name}" — they have ${reciter._count.recognitions} recognition(s) in user history. Reassign or clear them first.`,
         StatusCodes.CONFLICT,
       );
     }
@@ -248,7 +403,6 @@ export const reciterService = {
 
   // ---------------------------------------------------------------------------
   // Toggle favorite (Authenticated)
-  // Uses composite PK on FavoriteReciter so upsert-style toggle is clean.
   // ---------------------------------------------------------------------------
   async toggleFavorite(
     userId: string,
@@ -278,9 +432,8 @@ export const reciterService = {
   },
 
   // ---------------------------------------------------------------------------
-  // Save image file to disk (used by create & update)
+  // Save image file to disk
   // Returns the public URL path, e.g. /uploads/reciters/abc123.jpg
-  // If oldImageUrl is provided and points to local storage, the old file is deleted.
   // ---------------------------------------------------------------------------
   async saveImageFile(
     file: Express.Multer.File,
@@ -306,7 +459,6 @@ export const reciterService = {
 
     fs.writeFileSync(uploadPath, file.buffer);
 
-    // Delete old local image if it was stored on this server
     if (oldImageUrl && oldImageUrl.startsWith("/uploads/reciters/")) {
       const oldPath = path.join(process.cwd(), "public", oldImageUrl);
       if (fs.existsSync(oldPath)) {

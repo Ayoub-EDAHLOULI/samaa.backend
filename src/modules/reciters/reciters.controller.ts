@@ -5,14 +5,20 @@ import { StatusCodes } from "../../shared/constants/status-codes";
 import { AppError } from "../../shared/utils/errors";
 
 export const reciterController = {
-  // GET /reciters
+  // GET /reciters?page=&limit=&search=&lang=
   async getAllReciters(req: Request, res: Response) {
     try {
       const page = Number(req.query.page) || 1;
       const limit = Math.min(Number(req.query.limit) || 20, 100);
       const search = (req.query.search as string) || undefined;
+      const lang = (req.query.lang as string) || "en";
 
-      const result = await reciterService.getAllReciters(page, limit, search);
+      const result = await reciterService.getAllReciters(
+        page,
+        limit,
+        search,
+        lang,
+      );
 
       return ApiResponse.success(
         res,
@@ -31,12 +37,13 @@ export const reciterController = {
     }
   },
 
-  // GET /reciters/trending
+  // GET /reciters/trending?limit=&lang=
   async getTrendingReciters(req: Request, res: Response) {
     try {
       const limit = Math.min(Number(req.query.limit) || 10, 50);
+      const lang = (req.query.lang as string) || "en";
 
-      const reciters = await reciterService.getTrendingReciters(limit);
+      const reciters = await reciterService.getTrendingReciters(limit, lang);
 
       return ApiResponse.success(
         res,
@@ -55,12 +62,15 @@ export const reciterController = {
     }
   },
 
-  // GET /reciters/:slug
+  // GET /reciters/:slug?lang=
   async getReciterBySlug(req: Request, res: Response) {
     try {
+      const lang = (req.query.lang as string) || "en";
+
       const reciter = await reciterService.getReciterBySlug(
         req.params.slug as string,
         req.user?.userId,
+        lang,
       );
 
       return ApiResponse.success(
@@ -80,7 +90,7 @@ export const reciterController = {
     }
   },
 
-  // GET /reciters/id/:id  (Admin)
+  // GET /reciters/id/:id  (Admin — returns all translations)
   async getReciterById(req: Request, res: Response) {
     try {
       const reciter = await reciterService.getReciterById(
@@ -114,7 +124,7 @@ export const reciterController = {
 
       const reciter = await reciterService.createReciter({
         ...req.body,
-        imageUrl,
+        ...(imageUrl && { imageUrl }),
       });
 
       return ApiResponse.success(
@@ -140,7 +150,6 @@ export const reciterController = {
     try {
       let imageUrl: string | undefined;
       if (req.file) {
-        // Fetch current imageUrl so saveImageFile can delete the old file
         const current = await reciterService.getReciterById(
           req.params.id as string,
         );
@@ -152,7 +161,10 @@ export const reciterController = {
 
       const updated = await reciterService.updateReciter(
         req.params.id as string,
-        { ...req.body, ...(imageUrl && { imageUrl }) },
+        {
+          ...req.body,
+          ...(imageUrl && { imageUrl }),
+        },
       );
 
       return ApiResponse.success(res, updated, "Reciter updated successfully");

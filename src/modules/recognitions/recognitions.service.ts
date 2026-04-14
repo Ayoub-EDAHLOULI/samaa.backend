@@ -55,18 +55,27 @@ export const recognitionsService = {
       };
     }
 
-    // 3. Resolve predicted name against our DB (case-insensitive)
-    const reciter = await prisma.reciter.findFirst({
-      where: { name: { equals: aiResponse.reciter, mode: "insensitive" } },
+    // 3. Resolve predicted name against our DB via the English translation (case-insensitive)
+    const translation = await prisma.reciterTranslation.findFirst({
+      where: {
+        language: "en",
+        name: { equals: aiResponse.reciter, mode: "insensitive" },
+      },
+      select: {
+        name: true,
+        reciter: { select: { id: true, slug: true, imageUrl: true } },
+      },
     });
 
-    if (!reciter) {
+    if (!translation) {
       return {
         isMatch: false,
         confidence: aiResponse.confidence,
         message: `Matched with "${aiResponse.reciter}", but their profile is not yet in our database.`,
       };
     }
+
+    const reciter = translation.reciter;
 
     // 4. Save recognition + increment trending counter atomically
     const recognition = await prisma.$transaction(async (tx) => {
@@ -97,7 +106,7 @@ export const recognitionsService = {
       recognitionId: recognition.id,
       reciter: {
         id: reciter.id,
-        name: reciter.name,
+        name: translation.name,
         slug: reciter.slug,
         imageUrl: reciter.imageUrl,
       },
