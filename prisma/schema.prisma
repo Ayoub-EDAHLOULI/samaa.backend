@@ -230,7 +230,6 @@ model BlogCategoryTranslation {
   updatedAt       DateTime     @updatedAt
 
   blogCategory    BlogCategory @relation(fields: [blogCategoryId], references: [id], onDelete: Cascade)
-  // Assuming you still have the Language model from earlier
   language        Language     @relation(fields: [languageCode], references: [code], onDelete: Cascade)
 
   @@unique([blogCategoryId, languageCode])
@@ -246,9 +245,9 @@ model BlogPost {
   isPublished     Boolean               @default(false)
   publishedAt     DateTime?
   readTimeMinutes Int?                  // Powers the "7 min read" UI element
-  viewCount       Int                   @default(0) // Optional: for "Trending Posts" later
+  viewCount       Int                   @default(0) //For "Trending Posts"
   
-  authorId        String                // FIXED: Changed to String to match User UUID
+  authorId        String               
   categoryId      Int
   
   createdAt       DateTime              @default(now())

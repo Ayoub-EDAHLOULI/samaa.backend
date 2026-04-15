@@ -31,6 +31,8 @@ export const blogCategoryService = {
       isActive: cat.isActive,
       title: cat.translations[0]?.title || "Untitled",
       description: cat.translations[0]?.description || "",
+      metaTitle: cat.translations[0]?.metaTitle || null,
+      metaDescription: cat.translations[0]?.metaDescription || null,
       postsCount: cat._count.posts,
     }));
   },
@@ -103,6 +105,8 @@ export const blogCategoryService = {
         isActive: cat.isActive,
         title: cat.translations[0]?.title || "Untitled",
         description: cat.translations[0]?.description || "",
+        metaTitle: cat.translations[0]?.metaTitle || null,
+        metaDescription: cat.translations[0]?.metaDescription || null,
         postsCount: cat._count.posts,
         createdAt: cat.createdAt,
         updatedAt: cat.updatedAt,
@@ -164,6 +168,8 @@ export const blogCategoryService = {
       handle: category.handle,
       title: category.translations[0]?.title || "Untitled",
       description: category.translations[0]?.description,
+      metaTitle: category.translations[0]?.metaTitle || null,
+      metaDescription: category.translations[0]?.metaDescription || null,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     };

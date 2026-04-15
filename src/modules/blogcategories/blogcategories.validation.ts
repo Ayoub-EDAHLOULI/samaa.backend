@@ -23,6 +23,8 @@ export const blogCategoryValidation = {
               .min(2, "Title must be at least 2 characters")
               .max(200, "Title must not exceed 200 characters"),
             description: z.string().max(1000).optional(),
+            metaTitle: z.string().max(100).optional(),
+            metaDescription: z.string().max(255).optional(),
           }),
         )
         .min(1, "At least one translation is required"),
@@ -48,6 +50,8 @@ export const blogCategoryValidation = {
     body: z.object({
       title: z.string().min(2).max(200).optional(),
       description: z.string().max(1000).optional(),
+      metaTitle: z.string().max(100).optional(),
+      metaDescription: z.string().max(255).optional(),
     }),
   }),
 
