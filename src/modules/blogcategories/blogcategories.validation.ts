@@ -17,7 +17,7 @@ export const blogCategoryValidation = {
       translations: z
         .array(
           z.object({
-            languageCode: z.string().length(2, "Invalid language code"),
+            languageCode: z.string().min(2).max(10),
             title: z
               .string()
               .min(2, "Title must be at least 2 characters")
@@ -42,6 +42,17 @@ export const blogCategoryValidation = {
         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
         .optional(),
       isActive: z.boolean().optional(),
+      translations: z
+        .array(
+          z.object({
+            languageCode: z.string().min(2).max(10),
+            title: z.string().min(2).max(200),
+            description: z.string().max(1000).optional(),
+            metaTitle: z.string().max(100).optional(),
+            metaDescription: z.string().max(255).optional(),
+          }),
+        )
+        .optional(),
     }),
   }),
 
@@ -66,7 +77,7 @@ export const blogCategoryValidation = {
   translationParams: z.object({
     params: z.object({
       id: z.string().regex(/^\d+$/, "ID must be a number"),
-      languageCode: z.string().length(2, "Invalid language code"),
+      languageCode: z.string().min(2).max(10),
     }),
   }),
 
