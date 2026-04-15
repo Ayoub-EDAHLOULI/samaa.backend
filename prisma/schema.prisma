@@ -20,6 +20,9 @@ model Language {
   createdAt                   DateTime                     @default(now())
   updatedAt                   DateTime                     @updatedAt
 
+  blogCategoryTranslations    BlogCategoryTranslation[]
+  blogPostTranslations        BlogPostTranslation[]
+
   @@map("languages")
 }
 
@@ -45,6 +48,7 @@ model User {
   recognitions  Recognition[]
   favorites     FavoriteReciter[]
   refreshTokens RefreshToken[]
+  blogPosts     BlogPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -192,4 +196,93 @@ model FavoriteReciter {
   @@id([userId, reciterId]) // composite PK — no redundant UUID needed
   @@index([userId])
   @@map("favorite_reciters")
+}
+
+
+// =============================================
+// 7. CONTENT (Blog & SEO)
+// =============================================
+
+model BlogCategory {
+  id           Int                       @id @default(autoincrement())
+  handle       String                    @unique // Universal slug e.g., "technology"
+  isActive     Boolean                   @default(true)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  
+  translations BlogCategoryTranslation[]
+  posts        BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogCategoryTranslation {
+  id              String       @id @default(uuid())
+  blogCategoryId  Int
+  languageCode    String
+  
+  title           String       // e.g., "Technology" or "Technologie"
+  description     String?      @db.Text
+  metaTitle       String?
+  metaDescription String?      @db.Text
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  blogCategory    BlogCategory @relation(fields: [blogCategoryId], references: [id], onDelete: Cascade)
+  // Assuming you still have the Language model from earlier
+  language        Language     @relation(fields: [languageCode], references: [code], onDelete: Cascade)
+
+  @@unique([blogCategoryId, languageCode])
+  @@index([blogCategoryId])
+  @@index([languageCode])
+  @@map("blog_category_translations")
+}
+
+model BlogPost {
+  id              Int                   @id @default(autoincrement())
+  handle          String                @unique // Universal slug e.g., "how-samaa-identifies-reciters"
+  imageUrl        String?
+  isPublished     Boolean               @default(false)
+  publishedAt     DateTime?
+  readTimeMinutes Int?                  // Powers the "7 min read" UI element
+  viewCount       Int                   @default(0) // Optional: for "Trending Posts" later
+  
+  authorId        String                // FIXED: Changed to String to match User UUID
+  categoryId      Int
+  
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  author          User                  @relation(fields: [authorId], references: [id])
+  category        BlogCategory          @relation(fields: [categoryId], references: [id])
+  translations    BlogPostTranslation[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@map("blog_posts")
+}
+
+model BlogPostTranslation {
+  id              String   @id @default(uuid())
+  blogPostId      Int
+  languageCode    String
+  
+  title           String
+  content         String   @db.Text // Ensures capacity for massive articles
+  excerpt         String?  @db.Text // Powers the sub-headline under the title in UI
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  tags            String?  // Localized SEO keywords
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  blogPost        BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  language        Language @relation(fields: [languageCode], references: [code], onDelete: Cascade)
+
+  @@unique([blogPostId, languageCode])
+  @@index([blogPostId])
+  @@index([languageCode])
+  @@map("blog_post_translations")
 }

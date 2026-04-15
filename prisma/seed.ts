@@ -203,16 +203,20 @@ async function main() {
   console.log("🌐 Seeding languages...");
 
   const LANGUAGES = [
-    { code: "fr",  name: "Français",  isDefault: true,  isActive: true },
-    { code: "en",  name: "English",   isDefault: false, isActive: true },
-    { code: "es",  name: "Español",   isDefault: false, isActive: true },
-    { code: "ary", name: "العربية",   isDefault: false, isActive: true },
+    { code: "fr", name: "Français", isDefault: false, isActive: true },
+    { code: "en", name: "English", isDefault: true, isActive: true },
+    { code: "es", name: "Español", isDefault: false, isActive: true },
+    { code: "ary", name: "العربية", isDefault: false, isActive: true },
   ];
 
   for (const lang of LANGUAGES) {
     await prisma.language.upsert({
       where: { code: lang.code },
-      update: { name: lang.name, isActive: lang.isActive },
+      update: {
+        name: lang.name,
+        isDefault: lang.isDefault,
+        isActive: lang.isActive,
+      },
       create: lang,
     });
   }
