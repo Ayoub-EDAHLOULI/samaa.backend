@@ -105,6 +105,7 @@ import recognitionRoutes from "./modules/recognitions/recognitions.routes";
 import surahRoutes from "./modules/surahs/surahs.routes";
 import languageRoutes from "./modules/languages/languages.routes";
 import blogCategoryRoutes from "./modules/blogcategories/blogcategories.routes";
+import blogPostRoutes from "./modules/blogposts/blogposts.routes";
 
 app.use("/api/v1/languages", languageRoutes);
 
@@ -114,6 +115,7 @@ app.use("/api/v1/reciters", reciterRoutes);
 app.use("/api/v1/recognitions", recognitionRoutes);
 app.use("/api/v1/surahs", surahRoutes);
 app.use("/api/v1/blog-categories", blogCategoryRoutes);
+app.use("/api/v1/blog-posts", blogPostRoutes);
 
 // 404 handler
 app.use((req, res) => {
