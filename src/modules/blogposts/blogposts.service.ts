@@ -90,7 +90,7 @@ export const blogPostService = {
         // Search by Author Name
         {
           author: {
-            name: { contains: search, mode: "insensitive" },
+            displayName: { contains: search, mode: "insensitive" },
           },
         },
 
@@ -128,7 +128,7 @@ export const blogPostService = {
         orderBy,
         include: {
           author: {
-            select: { id: true, name: true },
+            select: { id: true, displayName: true },
           },
           category: {
             include: {
@@ -156,7 +156,7 @@ export const blogPostService = {
         title: post.translations[0]?.title || "Untitled",
         excerpt: post.translations[0]?.excerpt || "",
 
-        author: post.author.name,
+        author: post.author.displayName,
         authorId: post.author.id,
 
         readTimeMinutes: post.readTimeMinutes,
@@ -269,7 +269,7 @@ export const blogPostService = {
         orderBy,
         include: {
           author: {
-            select: { id: true, name: true },
+            select: { id: true, displayName: true },
           },
           category: {
             include: {
@@ -297,7 +297,7 @@ export const blogPostService = {
         title: post.translations[0]?.title || "Untitled",
         excerpt: post.translations[0]?.excerpt || "",
 
-        author: post.author.name,
+        author: post.author.displayName,
         authorId: post.author.id,
 
         readTimeMinutes: post.readTimeMinutes,
@@ -546,6 +546,8 @@ export const blogPostService = {
     if (data.handle) updateData.handle = data.handle;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
+    if (data.readTimeMinutes !== undefined)
+      updateData.readTimeMinutes = data.readTimeMinutes;
     if (data.publishedAt) {
       updateData.publishedAt = new Date(data.publishedAt);
     } else if (isPublished === true && !post.publishedAt) {
