@@ -328,7 +328,7 @@ export const blogPostService = {
     const post = await prisma.blogPost.findUnique({
       where: { handle },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, displayName: true } },
         category: {
           include: { translations: { where: { languageCode }, take: 1 } },
         },
