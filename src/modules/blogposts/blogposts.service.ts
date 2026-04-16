@@ -475,7 +475,11 @@ export const blogPostService = {
         imageUrl: imageUrl,
         isPublished: isPublished,
         publishedAt,
-        readTimeMinutes: data.readTimeMinutes,
+        readTimeMinutes:
+          (data.readTimeMinutes as any) != null &&
+          (data.readTimeMinutes as any) !== ""
+            ? Number(data.readTimeMinutes)
+            : null,
         translations: {
           create: translations,
         },
@@ -546,8 +550,11 @@ export const blogPostService = {
     if (data.handle) updateData.handle = data.handle;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
-    if (data.readTimeMinutes !== undefined)
-      updateData.readTimeMinutes = data.readTimeMinutes;
+    if ((data.readTimeMinutes as any) !== undefined)
+      updateData.readTimeMinutes =
+        (data.readTimeMinutes as any) !== "" && data.readTimeMinutes != null
+          ? Number(data.readTimeMinutes)
+          : null;
     if (data.publishedAt) {
       updateData.publishedAt = new Date(data.publishedAt);
     } else if (isPublished === true && !post.publishedAt) {
