@@ -95,7 +95,8 @@ export const authController = {
       const rawToken = req.cookies.refreshToken as string | undefined;
 
       if (!rawToken) {
-        throw new AppError(
+        return ApiResponse.error(
+          res,
           "No refresh token provided",
           StatusCodes.UNAUTHORIZED,
         );
@@ -110,8 +111,12 @@ export const authController = {
         "Token refreshed",
       );
     } catch (error) {
-      res.clearCookie("refreshToken", cookieOptions);
-
+      // Do NOT call res.clearCookie here. Clearing the httpOnly cookie on any
+      // error (including transient DB errors or token-rotation race conditions)
+      // causes the browser to discard the refreshToken cookie even when a
+      // concurrent request just issued a valid new one, permanently locking
+      // the user out. The token is already invalidated in the database; the
+      // stale cookie is harmless and will be rejected on any subsequent attempt.
       if (error instanceof AppError) {
         return ApiResponse.error(res, error.message, error.statusCode);
       }
