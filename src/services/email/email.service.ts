@@ -126,7 +126,31 @@ class EmailService {
     });
   }
 
-  // --- 3. Password Reset ---
+  // --- 3. Contact Form (sends to notification email) ---
+  async sendContactFormEmail(data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }): Promise<boolean> {
+    const notificationEmail =
+      process.env.NOTIFICATION_EMAIL || this.config.from.email;
+
+    return this.send({
+      to: { email: notificationEmail },
+      subject: `[Samaa Contact] ${data.subject} — ${data.name}`,
+      template: "contact-form",
+      context: {
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        YEAR: new Date().getFullYear(),
+      },
+    });
+  }
+
+  // --- 4. Password Reset ---
   async sendPasswordResetEmail(
     email: string,
     resetToken: string,

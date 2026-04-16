@@ -72,7 +72,10 @@ export const authService = {
       },
     });
 
-    // Non-blocking: send verification email
+    // Non-blocking: send welcome + verification emails
+    emailService
+      .sendWelcomeEmail(user.email, user.displayName)
+      .catch(() => {});
     emailService
       .sendEmailVerification(user.email, user.displayName, rawVerifyToken)
       .catch(() => {});
