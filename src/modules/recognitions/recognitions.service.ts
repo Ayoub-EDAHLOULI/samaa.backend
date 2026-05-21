@@ -9,8 +9,8 @@ import {
   AdminRecognitionItem,
 } from "./recognitions.types";
 
-// Minimum AI confidence required to accept a prediction
-const CONFIDENCE_THRESHOLD = 0.6;
+// Minimum AI confidence required to accept a prediction (tunable via env)
+const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD ?? "0.55");
 
 // Shared select for recognition rows — used in history and admin list
 const recognitionSelect = {
@@ -45,8 +45,11 @@ export const recognitionsService = {
       file.mimetype,
     );
 
+    console.log(`🎙️  AI Prediction → reciter: "${aiResponse.reciter}" | confidence: ${(aiResponse.confidence * 100).toFixed(1)}% | threshold: ${(CONFIDENCE_THRESHOLD * 100).toFixed(1)}%`);
+
     // 2. Confidence gate — unclear audio returns 200 with isMatch: false
     if (aiResponse.confidence < CONFIDENCE_THRESHOLD) {
+      console.log(`❌ Below threshold — returning "not clear enough"`);
       return {
         isMatch: false,
         confidence: aiResponse.confidence,

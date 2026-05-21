@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] // 1. Enable extensions
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 
@@ -89,6 +91,9 @@ model Reciter {
   imageUrl         String?
   countryCode      String? // 2-letter ISO code for flags (e.g., "KW", "EG")
   style            String? // e.g., "Murattal", "Mujawwad"
+  
+  // 3. THE NEW AI BRAIN: A 192-dimension vector from ECAPA-TDNN
+  embedding        Unsupported("vector(192)")? 
   
   // External links
   spotifyUrl       String?
