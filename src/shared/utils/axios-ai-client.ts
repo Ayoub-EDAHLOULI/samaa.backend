@@ -4,20 +4,20 @@ import { AppError } from "./errors";
 import { StatusCodes } from "../constants/status-codes";
 
 // This module acts as a proxy between our Node.js backend and the Python FastAPI microservice that handles AI predictions.
-export interface AiPredictionResponse {
-  reciter: string; // e.g., "Omar Al Darweez"
-  confidence: number; // e.g., 0.98
+export interface AiEmbeddingResponse {
+  embedding: number[]; // 192-dim ECAPA-TDNN speaker embedding, L2-normalized
 }
 
 /**
  * Forwards an audio buffer to the internal Python FastAPI microservice
- * and returns the AI's prediction.
+ * and returns the raw voice embedding. Matching against known reciters
+ * now happens in Postgres via pgvector, not in Python.
  */
-export async function predictReciterFromAudio(
+export async function extractEmbeddingFromAudio(
   audioBuffer: Buffer,
   originalFilename: string,
   mimeType: string,
-): Promise<AiPredictionResponse> {
+): Promise<AiEmbeddingResponse> {
   try {
     // The URL of the Python microservice is configurable via environment variable for flexibility (e.g., different URLs for development vs production)
     const aiServiceUrl =
@@ -31,7 +31,7 @@ export async function predictReciterFromAudio(
     });
 
     // 2. Fire the request to the Python server
-    const response = await axios.post<AiPredictionResponse>(
+    const response = await axios.post<AiEmbeddingResponse>(
       aiServiceUrl,
       form,
       {

@@ -92,9 +92,6 @@ model Reciter {
   countryCode      String? // 2-letter ISO code for flags (e.g., "KW", "EG")
   style            String? // e.g., "Murattal", "Mujawwad"
   
-  // 3. THE NEW AI BRAIN: A 192-dimension vector from ECAPA-TDNN
-  embedding        Unsupported("vector(192)")? 
-  
   // External links
   spotifyUrl       String?
   youtubeUrl       String?
@@ -106,12 +103,34 @@ model Reciter {
   translations     ReciterTranslation[]
   recognitions     Recognition[]
   favoritedBy      FavoriteReciter[]
+  embeddings       ReciterEmbedding[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([totalDiscoveries])
   @@map("reciters")
+}
+
+// -----------------------------------------------------------------------------
+// 3.0 RECITER EMBEDDINGS (The AI Brain — one voice print PER RECORDING)
+// A reciter enrolled with N recordings gets N rows; matching takes the best
+// similarity across all of them, so adding recordings widens recognition
+// coverage (different Surahs, mics, recording sessions).
+// -----------------------------------------------------------------------------
+model ReciterEmbedding {
+  id         String   @id @default(uuid())
+
+  reciterId  String
+  reciter    Reciter  @relation(fields: [reciterId], references: [id], onDelete: Cascade)
+
+  sourceFile String   // enrollment filename, e.g. "1.mp3" — for traceability
+  embedding  Unsupported("vector(192)")
+
+  createdAt  DateTime @default(now())
+
+  @@index([reciterId])
+  @@map("reciter_embeddings")
 }
 
 // -----------------------------------------------------------------------------

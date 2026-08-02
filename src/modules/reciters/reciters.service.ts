@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/utils/errors";
 import { StatusCodes } from "../../shared/constants/status-codes";
@@ -12,7 +13,10 @@ import {
   ReciterDetailResponse,
   ReciterTranslationResponse,
   ToggleFavoriteResult,
+  VoiceMatchResult,
 } from "./reciters.types";
+
+const EMBEDDING_DIMENSIONS = 192;
 
 // ---------------------------------------------------------------------------
 // Internal helper — raw Prisma shape returned by buildSelect
@@ -467,5 +471,75 @@ export const reciterService = {
     }
 
     return `/uploads/reciters/${fileName}`;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Voice identification — nearest-neighbor search over reciter_embeddings.
+  //
+  // Each reciter has one embedding PER ENROLLMENT RECORDING (multi-enrollment),
+  // and a reciter's score is their BEST recording's similarity (MIN distance).
+  // This is what lets a query generalize across Surahs: the query only needs
+  // to be close to ANY of the reciter's enrolled recordings, not to a single
+  // averaged voice print that blurs recording sessions together.
+  //
+  // pgvector's `<=>` operator returns COSINE DISTANCE, not similarity:
+  //   distance = 1 - cosine_similarity
+  // so a perfect match has distance 0. We flip it back to similarity
+  // (1 - distance) before returning, since that's the intuitive
+  // "0.0 - 1.0, higher is better" scale the rest of the app uses
+  // (see CONFIDENCE_THRESHOLD in recognitions.service.ts).
+  // ---------------------------------------------------------------------------
+  async findClosestByEmbedding(
+    embedding: number[],
+    language: string = "en",
+  ): Promise<VoiceMatchResult | null> {
+    if (embedding.length !== EMBEDDING_DIMENSIONS) {
+      throw new AppError(
+        `Expected a ${EMBEDDING_DIMENSIONS}-dimension embedding, got ${embedding.length}`,
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    // pgvector expects the literal form "[0.1,0.2,...]" cast to ::vector.
+    // Prisma.sql keeps this as a single bound parameter (not string-interpolated
+    // SQL), so this is not vulnerable to injection despite building raw SQL.
+    const vectorLiteral = `[${embedding.join(",")}]`;
+
+    const rows = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        slug: string;
+        imageUrl: string | null;
+        name: string | null;
+        distance: number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        r.id,
+        r.slug,
+        r."imageUrl",
+        rt.name,
+        MIN(re.embedding <=> ${vectorLiteral}::vector) AS distance
+      FROM reciter_embeddings re
+      JOIN reciters r ON r.id = re."reciterId"
+      LEFT JOIN reciter_translations rt
+        ON rt."reciterId" = r.id AND rt.language = ${language}
+      GROUP BY r.id, r.slug, r."imageUrl", rt.name
+      ORDER BY distance ASC
+      LIMIT 1
+    `);
+
+    const match = rows[0];
+    if (!match) {
+      return null;
+    }
+
+    return {
+      id: match.id,
+      slug: match.slug,
+      imageUrl: match.imageUrl,
+      name: match.name ?? match.slug,
+      similarity: 1 - match.distance,
+    };
   },
 };

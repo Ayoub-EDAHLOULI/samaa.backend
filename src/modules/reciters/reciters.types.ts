@@ -28,6 +28,15 @@ export interface ReciterResponse extends ReciterBase {
   translation: ReciterTranslationResponse | null;
 }
 
+// Result of a pgvector nearest-neighbor search against Reciter.embedding
+export interface VoiceMatchResult {
+  id: string;
+  slug: string;
+  imageUrl: string | null;
+  name: string; // English translation name
+  similarity: number; // 0.0 - 1.0 (cosine similarity, 1.0 = identical)
+}
+
 // Detail response — adds isFavorited for authenticated users
 export interface ReciterDetailResponse extends ReciterResponse {
   isFavorited: boolean | null;

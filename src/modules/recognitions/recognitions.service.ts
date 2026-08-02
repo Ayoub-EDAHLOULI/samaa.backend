@@ -1,7 +1,8 @@
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/utils/errors";
 import { StatusCodes } from "../../shared/constants/status-codes";
-import { predictReciterFromAudio } from "../../shared/utils/axios-ai-client";
+import { extractEmbeddingFromAudio } from "../../shared/utils/axios-ai-client";
+import { reciterService } from "../reciters/reciters.service";
 import {
   ProcessAudioOptions,
   RecognitionResultResponse,
@@ -38,47 +39,39 @@ export const recognitionsService = {
   ): Promise<RecognitionResultResponse> {
     const { userId, audioDuration, deviceOs } = options;
 
-    // 1. Forward audio buffer to the Python microservice
-    const aiResponse = await predictReciterFromAudio(
+    // 1. Forward audio buffer to the Python microservice — returns a raw
+    //    192-dim ECAPA-TDNN voice embedding, no matching done on that side
+    const { embedding } = await extractEmbeddingFromAudio(
       file.buffer,
       file.originalname,
       file.mimetype,
     );
 
-    console.log(`🎙️  AI Prediction → reciter: "${aiResponse.reciter}" | confidence: ${(aiResponse.confidence * 100).toFixed(1)}% | threshold: ${(CONFIDENCE_THRESHOLD * 100).toFixed(1)}%`);
+    // 2. Nearest-neighbor search over Reciter.embedding via pgvector cosine distance
+    const match = await reciterService.findClosestByEmbedding(embedding);
 
-    // 2. Confidence gate — unclear audio returns 200 with isMatch: false
-    if (aiResponse.confidence < CONFIDENCE_THRESHOLD) {
+    if (!match) {
+      return {
+        isMatch: false,
+        confidence: 0,
+        message: "No enrolled reciters to compare against yet.",
+      };
+    }
+
+    console.log(`🎙️  AI Prediction → reciter: "${match.name}" | similarity: ${(match.similarity * 100).toFixed(1)}% | threshold: ${(CONFIDENCE_THRESHOLD * 100).toFixed(1)}%`);
+
+    // 3. Confidence gate — unclear audio returns 200 with isMatch: false
+    if (match.similarity < CONFIDENCE_THRESHOLD) {
       console.log(`❌ Below threshold — returning "not clear enough"`);
       return {
         isMatch: false,
-        confidence: aiResponse.confidence,
+        confidence: match.similarity,
         message:
           "Audio not clear enough. Please try getting closer to the source.",
       };
     }
 
-    // 3. Resolve predicted name against our DB via the English translation (case-insensitive)
-    const translation = await prisma.reciterTranslation.findFirst({
-      where: {
-        language: "en",
-        name: { equals: aiResponse.reciter, mode: "insensitive" },
-      },
-      select: {
-        name: true,
-        reciter: { select: { id: true, slug: true, imageUrl: true } },
-      },
-    });
-
-    if (!translation) {
-      return {
-        isMatch: false,
-        confidence: aiResponse.confidence,
-        message: `Matched with "${aiResponse.reciter}", but their profile is not yet in our database.`,
-      };
-    }
-
-    const reciter = translation.reciter;
+    const reciter = { id: match.id, slug: match.slug, imageUrl: match.imageUrl };
 
     // 4. Save recognition + increment trending counter atomically
     const recognition = await prisma.$transaction(async (tx) => {
@@ -86,7 +79,7 @@ export const recognitionsService = {
         data: {
           userId: userId ?? null,
           reciterId: reciter.id,
-          confidenceScore: aiResponse.confidence,
+          confidenceScore: match.similarity,
           audioDuration: audioDuration ?? null,
           deviceOs: deviceOs ?? null,
         },
@@ -104,12 +97,12 @@ export const recognitionsService = {
     // 5. Return enriched result including the saved recognition ID
     return {
       isMatch: true,
-      confidence: aiResponse.confidence,
+      confidence: match.similarity,
       message: "Reciter identified successfully",
       recognitionId: recognition.id,
       reciter: {
         id: reciter.id,
-        name: translation.name,
+        name: match.name,
         slug: reciter.slug,
         imageUrl: reciter.imageUrl,
       },
